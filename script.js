@@ -28,13 +28,21 @@ class Player {
         this.position = position
         this.velocity = velocity
         this.radius = 15
+        this.radians = 0.75
+        this.openRate = 0.12
     }
 
 
     draw() {
         context.beginPath()
-        context.arc(this.position.x, this.position.y, this.radius, 0,
-            Math.PI * 2)
+        context.arc(
+            this.position.x, 
+            this.position.y, 
+            this.radius, 0,
+            this.radians,
+            Math.PI * 2 - this.radians
+            )
+        context.lineTo(this.position.x, this.position.y)
         context.fillStyle = 'yellow'
         context.fill()
         context.closePath()
@@ -43,7 +51,11 @@ class Player {
         this.draw()
         this.position.x += this.velocity.x
         this.position.y += this.velocity.y
-    }
+
+        if (this.radians < 0 || this.radians > .75) this.openRate = -this.openRate
+        
+        this.radians += this.openRate
+     }
 
 }
 
@@ -531,6 +543,12 @@ function animate() {
         }
     }
 
+    // Win conditions 
+    if (pellets.length === 0) {
+        console.log('WINNER!!');
+        cancelAnimationFrame(animationId)
+    }
+
     // Power Ups
     for (let i = powerUps.length - 1; 0 <= i; i--) {
         const powerUp = powerUps[i]
@@ -538,7 +556,7 @@ function animate() {
 
         // PacMan eats Power Up
         if (Math.hypot(powerUp.position.x - player.position.x, powerUp.position.y - player.position.y) < powerUp.radius + player.radius) {
-            powerUps.splice(i, 1)
+            powerUpsss.splice(i, 1)
 
             // Ghost Fear
             ghosts.forEach(ghost => {
