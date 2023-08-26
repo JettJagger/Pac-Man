@@ -1,6 +1,6 @@
 const canvas = document.querySelector('canvas');
 const context = canvas.getContext('2d');
-
+const scoreEl = document.getElementById('scoreEl')
 const pixelRatio = window.devicePixelRatio || 1;
 
 canvas.width = canvas.clientWidth * pixelRatio;
@@ -89,6 +89,7 @@ const keys = {
     }
 }
 let lastKey = ''
+let score = 0
 
 const map = [
     ['1', '-', '-', '-', '-', '-', '-', '-', '-', '-', '2'],
@@ -419,17 +420,17 @@ function animate() {
         }
     }
 
+// touch pellets to delete commands
     for (let i = pellets.length - 1; 0 < i; i--) {
         const pellet = pellets[i]
         pellet.draw()
 
         if (Math.hypot(pellet.position.x - player.position.x, pellet.position.y - player.position.y) < pellet.radius + player.radius) {
             pellets.splice(i, 1)
+            score += 10
+            scoreEl.innerHTML = score
         }
     }
-
-
-
 
     boundaries.forEach((boundary) => {
         boundary.draw()
