@@ -57,6 +57,7 @@ class Ghost {
         this.color = color
         this.prevCollisions = []
         this.speed = 2
+        this.scared = false
     }
 
 
@@ -64,7 +65,7 @@ class Ghost {
         context.beginPath()
         context.arc(this.position.x, this.position.y, this.radius, 0,
             Math.PI * 2)
-        context.fillStyle = this.color
+        context.fillStyle = this.scared ? 'blue' : this.color
         context.fill()
         context.closePath()
     }
@@ -94,10 +95,28 @@ class Pellet {
     }
 }
 
+// Power Up Creation
+class PowerUp {
+    constructor({ position }) {
+        this.position = position
+        this.radius = 8
+    }
+
+
+    draw() {
+        context.beginPath()
+        context.arc(this.position.x, this.position.y, this.radius, 0,
+            Math.PI * 2)
+        context.fillStyle = 'white'
+        context.fill()
+        context.closePath()
+    }
+}
+const powerUps = []
 const pellets = []
 const boundaries = [];
 // Ghosties Spawn
-const ghost = [
+const ghosts = [
     new Ghost({
         position: {
             x: Boundary.width * 6 + Boundary.height / 2,
@@ -107,7 +126,19 @@ const ghost = [
             x: Ghost.speed,
             y: 0
         }
-    })
+    }),
+    new Ghost({
+        position: {
+            x: Boundary.width * 6 + Boundary.height / 2,
+            y: Boundary.height * 3 + Boundary.height / 2
+        },
+        velocity: {
+            x: Ghost.speed,
+            y: 0
+        },
+        color: 'pink'
+    }),
+
 ]
 
 
@@ -359,6 +390,16 @@ map.forEach((row, i) => {
                     })
                 )
                 break
+            case 'p':
+                powerUps.push(
+                    new PowerUp({
+                        position: {
+                            x: j * Boundary.width + Boundary.width / 2,
+                            y: i * Boundary.height + Boundary.height / 2
+                        }
+                    })
+                )
+                break
 
         }
     })
@@ -368,25 +409,25 @@ map.forEach((row, i) => {
 context.scale(pixelRatio, pixelRatio);
 
 // Collision controls
-function circleCollidesWithRectangle({ circle, rectangle}) {
+function circleCollidesWithRectangle({ circle, rectangle }) {
     const padding = Boundary.width / 2 - circle.radius - 1
     return (
         circle.position.y - circle.radius + circle.velocity.y <=
-            rectangle.position.y + rectangle.height + padding &&
+        rectangle.position.y + rectangle.height + padding &&
         circle.position.x + circle.radius + circle.velocity.x >=
-            rectangle.position.x - padding &&
+        rectangle.position.x - padding &&
         circle.position.y + circle.radius + circle.velocity.y >=
-            rectangle.position.y - padding &&
+        rectangle.position.y - padding &&
         circle.position.x - circle.radius + circle.velocity.x <=
-            rectangle.position.x + rectangle.width + padding 
+        rectangle.position.x + rectangle.width + padding
     )
 }
 
 // Animation loop
+let animationId
 function animate() {
-    requestAnimationFrame(animate)
+    animationId = requestAnimationFrame(animate)
     context.clearRect(0, 0, canvas.width, canvas.height)
-
     if (keys.w.pressed && lastKey === 'w') {
         for (let i = 0; i < boundaries.length; i++) {
             const boundary = boundaries[i]
@@ -471,8 +512,48 @@ function animate() {
         }
     }
 
+    // scared ghost collision 
+    for (let i = ghosts.length - 1; 0 <= i; i--) {
+        const ghost = ghosts[i]
+
+        // Ghost catches PacMan 
+        if (Math.hypot(
+            ghost.position.x - player.position.x,
+            ghost.position.y - player.position.y
+        ) <
+            ghost.radius + player.radius) {
+            if (ghost.scared) {
+                ghosts.splice(i, 1)
+            } else {
+                cancelAnimationFrame(animationId)
+                console.log('GAME OVER!!');
+            }
+        }
+    }
+
+    // Power Ups
+    for (let i = powerUps.length - 1; 0 <= i; i--) {
+        const powerUp = powerUps[i]
+        powerUp.draw()
+
+        // PacMan eats Power Up
+        if (Math.hypot(powerUp.position.x - player.position.x, powerUp.position.y - player.position.y) < powerUp.radius + player.radius) {
+            powerUps.splice(i, 1)
+
+            // Ghost Fear
+            ghosts.forEach(ghost => {
+                ghost.scared = true
+
+                setTimeout(() => {
+                    ghost.scared = false
+                }, 5000)
+            })
+        }
+
+    }
+
     // touch pellets to delete commands
-    for (let i = pellets.length - 1; 0 < i; i--) {
+    for (let i = pellets.length - 1; 0 <= i; i--) {
         const pellet = pellets[i]
         pellet.draw()
 
@@ -497,7 +578,7 @@ function animate() {
     })
     player.update()
 
-    ghost.forEach(ghost => {
+    ghosts.forEach(ghost => {
         ghost.update()
 
         const collisions = []
