@@ -29,34 +29,38 @@ class Player {
         this.velocity = velocity
         this.radius = 15
         this.radians = 0.75
-        this.openRate = 0.12
+        this.openRate =0.12
+        this.rotation = 0
+
     }
 
-
     draw() {
+        context.save()
+        context.translate(this.position.x, this.position.y)
+        context.rotate(this.rotation)
+        context.translate(-this.position.x, -this.position.y)
         context.beginPath()
         context.arc(
-            this.position.x, 
-            this.position.y, 
-            this.radius, 0,
-            this.radians,
-            Math.PI * 2 - this.radians
-            )
+            this.position.x,
+            this.position.y,
+            this.radius, 
+            this.radians, 
+            Math.PI * 2 - this.radians)
         context.lineTo(this.position.x, this.position.y)
         context.fillStyle = 'yellow'
         context.fill()
         context.closePath()
+        context.restore()
     }
     update() {
         this.draw()
         this.position.x += this.velocity.x
         this.position.y += this.velocity.y
 
-        if (this.radians < 0 || this.radians > .75) this.openRate = -this.openRate
-        
-        this.radians += this.openRate
-     }
+        if(this.radians < 0 || this.radians > .75) this.openRate = -this.openRate
 
+        this.radians += this.openRate
+    }
 }
 
 // Ghost Creation
@@ -556,7 +560,7 @@ function animate() {
 
         // PacMan eats Power Up
         if (Math.hypot(powerUp.position.x - player.position.x, powerUp.position.y - player.position.y) < powerUp.radius + player.radius) {
-            powerUpsss.splice(i, 1)
+            powerUps.splice(i, 1);
 
             // Ghost Fear
             ghosts.forEach(ghost => {
@@ -701,7 +705,11 @@ function animate() {
             ghost.prevCollisions = []
         }
     })
-}
+    if (player.velocity.x > 0) player.rotation = 0
+       else if (player.velocity.x < 0) player.rotation = Math.PI
+       else if (player.velocity.y > 0) player.rotation = Math.PI / 2
+       else if (player.velocity.x < 0) player.rotation = Math.PI * 1.5
+} //end of animation loop 
 
 animate()
 // Move PacMan controls
